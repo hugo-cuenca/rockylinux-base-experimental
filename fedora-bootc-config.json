@@ -1,0 +1,7 @@
+{
+    "Labels": {
+        "containers.bootc": "1",
+        "redhat.id": "fedora"
+    },
+    "StopSignal": "SIGRTMIN+3"
+}
