@@ -1,0 +1,3 @@
+[install]
+# This of course is messy, not everything in Fedora uses it
+root-fs-type = "btrfs"

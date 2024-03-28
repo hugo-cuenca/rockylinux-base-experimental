@@ -1,0 +1,9 @@
+# The grub bits are mainly designed for desktops, and IMO haven't seen
+# enough testing in concert with ostree. At some point we'll flesh out
+# the full plan in https://github.com/coreos/fedora-coreos-tracker/issues/47
+rm -vf /etc/grub.d/{08_fallback_counting, 10_reset_boot_success, 12_menu_auto_hide}
+for f in $(rpm -ql grub2-tools |grep /usr/lib/systemd); do
+  case $f in
+    *.service|*.conf|*.timer) rm -v $f;;
+  esac
+done

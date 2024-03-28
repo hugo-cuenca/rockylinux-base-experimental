@@ -1,0 +1,7 @@
+#!/usr/bin/python3
+import rpm
+import sys
+
+spec = rpm.spec(sys.argv[1])
+for dep in rpm.ds(spec.sourceHeader, 'requires'):
+    print(dep.DNEVR()[2:])

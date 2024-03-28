@@ -1,0 +1,49 @@
+#!/bin/bash
+set -xeuo pipefail
+# A small script which sets up the default mount points
+# in the target root alongside devices, and then executes
+# dnf --installroot in it.
+
+# Ensure we're running in a mount and pid namespace, so
+# our filesystem mount points are atomically cleaned up.
+# (TODO: Also avoid leaking environment variables, etc.)
+if test -z "${_installroot_unshared:-}"; then
+    echo "Unsharing mount and pid namespaces"
+    exec unshare -f -mp env _installroot_unshared=1 $0 "$@"
+fi
+installroot=$1
+shift
+
+# Don't create parent directories out of conservatism
+test -d ${installroot} || mkdir ${installroot}
+cd ${installroot}
+
+# Create basic directories; note that we leave /sys empty
+for d in "run" "proc" "sys" "dev" "tmp" "var"; do
+    mkdir -p $d
+done
+
+# Mount tmpfs filesystems
+for d in "run" "tmp" "dev"; do
+    mount -t tmpfs tmpfs $d
+done
+
+# Some things rely on this, e.g. authselect
+touch run/ostree-booted
+
+mount --bind /proc proc
+
+# Pull in host devices
+for dev in "null" "zero" "full" "urandom" "tty"; do
+    touch dev/$dev
+    mount --bind /dev/$dev dev/$dev
+done
+
+# And the default symlinks
+ln -sf /proc/self/fd/0 dev/stdin
+ln -sf /proc/self/fd/1 dev/stdout
+ln -sf /proc/self/fd/2 dev/stderr
+
+exec dnf --installroot=$(pwd) "$@"
+
+

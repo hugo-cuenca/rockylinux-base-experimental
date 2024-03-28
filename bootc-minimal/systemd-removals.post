@@ -1,0 +1,7 @@
+#!/bin/bash
+set -xeuo pipefail
+# Generally we expect other tools to do this (e.g. Ignition or cloud-init)
+rm -vf /usr/lib/systemd/system/sysinit.target.wants/systemd-firstboot.service
+# We don't want auto-generated mount units. See also
+# https://github.com/systemd/systemd/issues/13099
+rm -vf /usr/lib/systemd/system-generators/systemd-gpt-auto-generator

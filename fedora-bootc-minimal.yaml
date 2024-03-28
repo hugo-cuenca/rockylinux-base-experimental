@@ -1,8 +1,0 @@
-repos:
-  - fedora
-  - updates
-
-include:
-  - releasever.yaml # Generated
-  - minimal/manifest.yaml
-  - minimal/kernel.yaml

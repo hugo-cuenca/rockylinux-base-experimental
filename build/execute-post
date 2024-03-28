@@ -1,0 +1,14 @@
+#!/bin/bash
+set -xeuo pipefail
+
+# Execute a script in the target root.
+
+dest=$1
+shift
+script=$1
+shift
+
+tmpd=$(mktemp -d -p /var/tmp)
+bwrap --bind ${dest} / --proc /proc --tmpfs /tmp --tmpfs /run --bind ${tmpd} /var/tmp --dev-bind /dev /dev \
+	--ro-bind $post /tmp/script -- /tmp/script
+rm $tmpd -rf

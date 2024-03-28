@@ -1,0 +1,12 @@
+ #!/bin/bash
+set -xeuo pipefail
+# Move the EFI and GRUB binaries into the place that rpm-ostree
+# would write them
+mkdir -p /usr/lib/ostree-boot
+for d in efi grub2; do
+  if test -d /boot/${d}; then
+    mv -T /boot/${d} /usr/lib/ostree-boot/${d}
+  fi
+done
+# Transforms /usr/lib/ostree-boot into a bootupd-compatible update payload
+/usr/bin/bootupctl backend generate-update-metadata

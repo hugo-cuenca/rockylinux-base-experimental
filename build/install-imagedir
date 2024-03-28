@@ -1,0 +1,74 @@
+#!/bin/bash
+set -euo pipefail
+
+# This script takes a "source" directory and a target installroot.
+# The source directory can contain four types of entries:
+# - .spec: These are evaluated for their BuildRequires and installed into the target root
+# - rootfs: The contents of this directory are synchronized into the target root.
+# - .post: An arbitrary executable script; evaluated in alphanumeric order
+# - inherit: A symbolic link to another imagedir that will be processed
+# - passwd,group: If a passwd file exists, it is copied into the root before
+#   package installs in order to aid reproducible uid/gid allocations.  It is an
+#   error if the root is already non-empty.
+dn=$(dirname $0)
+
+src=$1
+shift
+dest=$1
+shift
+
+if test -L ${src}/inherit; then
+    target=$(cd ${src} && readlink inherit)
+    echo "Processing include ${src}/${target}"
+    $0 ${src}/${target} ${dest}
+fi
+
+# Initialize the target root; we prepopulate
+# /etc/passwd and /etc/group in order to ensure
+# some consistent uid/gid allocations.
+# TODO: convert this to systemd-sysusers or JSON user records
+# as appropriate
+echo "Initializing ${dest}"
+mkdir -p "${dest}"
+if test -f $src/passwd; then
+    if test -d ${dest}/etc; then
+        echo "error: Writing passwd/group to extant root"; exit 1
+    fi
+    mkdir -m 0755 ${dest}/etc
+    install -t ${dest}/etc ${src}/{passwd,group}
+    echo "Installed initial passwd/group"
+fi
+
+# Ensure we consistently use /usr/lib/sysimage/rpm
+sysimage_rpm=${dest}/usr/lib/sysimage/rpm
+mkdir -m 0755 -p ${sysimage_rpm}
+mkdir -m 0755 -p ${dest}/var/lib
+ln -sf ../../usr/lib/sysimage/rpm ${dest}/var/lib/rpm
+
+# Install packages into root
+find ${src} -name '*.spec' | while read spec; do
+    # We automatically set --releasever from the host's VERSION_ID os-release
+    # field.  This is technically different from what RPM does by default, but
+    # it's way easier to parse.
+    releasever=$(. /usr/lib/os-release && echo $VERSION_ID)
+    test -n "$releasever" || (echo "Failed to determine releasever"; exit 1)
+    echo "Installing BuildRequires from ${spec}"
+    ${dn}/dnf-installroot ${dest} --setopt=releasever=${releasever} --setopt=cachedir=/var/cache/dnf --setopt=keepcache=1 builddep -y ${spec}
+done
+
+# This one is used by rpm-ostree and bootupd; make a compat link
+ln -sf ../../lib/sysimage/rpm ${dest}/usr/share/rpm
+
+if test -d ${src}/rootfs; then
+    echo "Copying ${src}/rootfs"
+    rsync -rlp ${src}/rootfs/ ${dest}/
+fi
+
+find ${src} -name '*.post'| sort | while read post; do
+    echo "Executing postprocessing script: ${post}"
+    tmpd=$(mktemp -d -p /var/tmp)
+    bwrap --bind ${dest} / --proc /proc --tmpfs /tmp --tmpfs /run --bind ${tmpd} /var/tmp --dev-bind /dev /dev \
+	--ro-bind $post /tmp/script -- /tmp/script
+    rm $tmpd -rf
+done
+echo "Successfully installed imagedir: ${src}"

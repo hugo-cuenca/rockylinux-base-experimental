@@ -1,0 +1,25 @@
+#!/bin/bash
+
+set -xeuo pipefail
+
+cachedir=$1
+shift
+rootfs=$1
+shift
+output=$1
+shift
+
+dn=$(dirname $0)
+
+ostree_repo=${cachedir}/ostree-repo
+ostree --repo=${ostree_repo} init --mode=bare-user
+# GC by default to avoid leaking space over time (we could have this be time based instead)
+ostree --repo=${ostree_repo} prune --refs-only --depth=0
+
+commitid_path=${cachedir}/commitid.txt
+rpm-ostree compose commit --repo=${ostree_repo} --write-commitid-to=${commitid_path} --unified-core ${dn}/postprocess-manifest.yaml ${rootfs}
+commitid=$(cat ${commitid_path})
+rpm-ostree compose container-encapsulate --repo=${ostree_repo} ${commitid} oci-archive:${output}
+rm ${commitid_path}
+
+echo "Generated: ${output}"

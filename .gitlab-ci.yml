@@ -1,0 +1,31 @@
+image: quay.io/podman/stable:latest
+
+stages:
+  - build
+
+.base:
+  parallel:
+    matrix:
+      - VARIANT:
+          - minimal
+        VERSION: ["39", "40", "rawhide"]
+
+test-build:
+  extends: .base
+  only:
+    - merge_requests
+  stage: build
+  script:
+    - podman build --security-opt=label=disable --cap-add=all -t localhost/fedora-bootc-${VARIANT} .
+
+build-push:
+  extends: .base
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+  stage: build
+  before_script:
+    # Log into the registry
+    - echo "$CI_REGISTRY_PASSWORD" | podman login -u "$CI_REGISTRY_USER" --password-stdin $CI_REGISTRY
+  script:
+    - podman build --security-opt=label=disable --cap-add=all --from=quay.io/fedora/fedora:${VERSION} -t ${CI_REGISTRY_IMAGE}/fedora-bootc-${VARIANT}:${VERSION} .
+    - podman push ${CI_REGISTRY_IMAGE}/fedora-bootc-${VARIANT}:${VERSION}

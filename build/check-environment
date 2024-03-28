@@ -1,0 +1,6 @@
+#!/bin/bash
+set -euo pipefail
+
+if ! bwrap --ro-bind / / true; then
+  echo "failed to run bwrap; nested container access required"; exit 1
+fi
