@@ -3,15 +3,14 @@ image: quay.io/podman/stable:latest
 stages:
   - build
 
-.base:
+test-build:
   parallel:
     matrix:
       - VARIANT:
           - minimal
-        VERSION: ["40", "rawhide"]
-
-test-build:
-  extends: .base
+          - full
+        VERSION: 
+          - "40"
   only:
     - merge_requests
   stage: build
@@ -19,7 +18,12 @@ test-build:
     - podman build --security-opt=label=disable --cap-add=all -t localhost/fedora-bootc-${VARIANT} .
 
 build-push:
-  extends: .base
+  parallel:
+    matrix:
+      - VARIANT:
+          - minimal
+          - full
+        VERSION: ["40", "rawhide"]
   rules:
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
   stage: build
