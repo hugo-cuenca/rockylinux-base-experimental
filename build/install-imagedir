@@ -11,6 +11,7 @@ set -euo pipefail
 #   package installs in order to aid reproducible uid/gid allocations.  It is an
 #   error if the root is already non-empty.
 dn=$(dirname $0)
+. ${dn}/lib.sh
 
 src=$1
 shift
@@ -53,7 +54,11 @@ find ${src} -name '*.spec' | while read spec; do
     releasever=$(. /usr/lib/os-release && echo $VERSION_ID)
     test -n "$releasever" || (echo "Failed to determine releasever"; exit 1)
     echo "Installing BuildRequires from ${spec}"
-    ${dn}/dnf-installroot ${dest} --setopt=releasever=${releasever} --setopt=cachedir=/var/cache/dnf --setopt=keepcache=1 builddep -y ${spec}
+    opts=()
+    if grep -qEe '^# Recommends:.*false' ${spec}; then
+        opts+=(--setopt=install_weak_deps=0)
+    fi
+    runv ${dn}/dnf-installroot ${dest} --setopt=releasever=${releasever} --setopt=cachedir=/var/cache/dnf --setopt=keepcache=1 ${opts[@]} builddep -y ${spec}
 done
 
 # This one is used by rpm-ostree and bootupd; make a compat link

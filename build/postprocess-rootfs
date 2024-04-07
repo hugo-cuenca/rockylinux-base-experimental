@@ -49,8 +49,13 @@ sed -i -e 's, /root, /var/roothome,' ${rootfs}/usr/lib/tmpfiles.d/provision.conf
 # we need to delete /var/roothome
 sed -i -e '/^d- \/var\/roothome /d' ${rootfs}/usr/lib/tmpfiles.d/provision.conf
 
+echo "Adjusting shadow/gshadow"
+${dn}/passwd-shadow-fixup ${rootfs}
+
 echo "Running rpm-ostree postprocessing"
 rpm-ostree compose postprocess ${rootfs} ${dn}/postprocess-manifest.yaml
+
+# Note that after here, it's e.g. /usr/etc, not /etc
 
 # Ensure this link exists
 ln -sf sysroot/ostree ${rootfs}/ostree

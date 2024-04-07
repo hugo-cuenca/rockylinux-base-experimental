@@ -1,0 +1,23 @@
+#!/bin/bash
+set -euo pipefail
+
+# Remove leftover cruft in /etc/{g,}shadow
+# For some reason right now, the "nobody" user is leftover in /etc/shadow
+
+dest=$1
+shift
+
+passwd=${dest}/etc/passwd
+shadow=${dest}/etc/shadow
+group=${dest}/etc/group
+gshadow=${dest}/etc/gshadow
+if test -f ${passwd} && grep -qEe '^nobody:' ${shadow} 2>/dev/null; then
+	grep -vE -e '^nobody:' ${shadow} > ${shadow}.new
+	cat ${shadow}.new > ${shadow}
+	rm ${shadow}.new
+	echo "Updated: ${shadow}"
+	grep -vE -e '^nobody:' ${gshadow} > ${gshadow}.new
+	cat ${gshadow}.new > ${gshadow}
+	rm ${gshadow}.new
+	echo "Updated: ${gshadow}"
+fi

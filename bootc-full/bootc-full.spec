@@ -91,5 +91,43 @@ BuildRequires: openssh-clients openssh-server
 # for managing nvme disks
 BuildRequires: nvme-cli
 
+# Generic default packages
+# Include and set the default editor
+BuildRequires: nano
+BuildRequires: nfs-utils
+# Additional firewall support; we aren't including these in RHCOS or they
+# don't exist in RHEL
+BuildRequires: iptables-nft iptables-services
+BuildRequires: WALinuxAgent-udev
+# Allow communication between sudo and SSSD
+# for caching sudo rules by SSSD.
+# https://github.com/coreos/fedora-coreos-tracker/issues/445
+BuildRequires: libsss_sudo
+# SSSD; we only ship a subset of the backends
+BuildRequires: sssd-client sssd-ad sssd-ipa sssd-krb5 sssd-ldap
+# Used by admins interactively
+BuildRequires: attr
+BuildRequires: openssl
+BuildRequires: lsof
+# Provides terminal tools like clear, reset, tput, and tset
+BuildRequires: ncurses
+# i18n
+BuildRequires: kbd
+# zram-generator (but not zram-generator-defaults) for F33 change
+# https://github.com/coreos/fedora-coreos-tracker/issues/509
+BuildRequires: zram-generator
+%if 0%{?rhel} >= 11
+BuildRequires: systemd-resolved
+%endif
+
+%ifarch x86_64 ppc64le aarch64
+BuildRequires: irqbalance
+%endif
+%ifarch ppc64le
+BuildRequires: librtas
+BuildRequires: powerpc-utils-core
+BuildRequires: ppc64-diag-rtas
+%endif
+
 %description
 %{summary}

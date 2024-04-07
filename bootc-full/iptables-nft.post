@@ -1,0 +1,12 @@
+#!/bin/bash
+set -xeuo pipefail
+# Default to iptables-nft. Otherwise, legacy wins. We can drop this once/if we
+# remove iptables-legacy. This is needed because alternatives don't work
+# https://github.com/coreos/fedora-coreos-tracker/issues/677
+# https://github.com/coreos/fedora-coreos-tracker/issues/676
+ln -sf /usr/sbin/ip6tables-nft         /etc/alternatives/ip6tables
+ln -sf /usr/sbin/ip6tables-nft-restore /etc/alternatives/ip6tables-restore
+ln -sf /usr/sbin/ip6tables-nft-save    /etc/alternatives/ip6tables-save
+ln -sf /usr/sbin/iptables-nft          /etc/alternatives/iptables
+ln -sf /usr/sbin/iptables-nft-restore  /etc/alternatives/iptables-restore
+ln -sf /usr/sbin/iptables-nft-save     /etc/alternatives/iptables-save
