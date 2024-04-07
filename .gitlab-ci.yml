@@ -8,7 +8,7 @@ stages:
     matrix:
       - VARIANT:
           - minimal
-        VERSION: ["39", "40", "rawhide"]
+        VERSION: ["40", "rawhide"]
 
 test-build:
   extends: .base
