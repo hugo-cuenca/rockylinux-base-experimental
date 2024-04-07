@@ -9,6 +9,9 @@ Release:        0
 Summary:        Base image
 License:        ASL 2.0
 
+# NOTE! This magical comment is interpreted to pass `--setopt=install_weak_deps=0` to dnf
+# Recommends: false
+
 # Basic components
 BuildRequires: systemd bootc kernel
 # Requirements for container self-install (bootc install)
