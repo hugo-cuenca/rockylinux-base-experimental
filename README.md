@@ -32,15 +32,19 @@ And represents a smaller target reference image.
 
 ## Building
 
+At the current time, the `Containerfile` *requires* podman or buildah; it will not build with docker
+or other container build systems that don't inherit from [containers/storage](https://github.com/containers/storage/).
+
 ```shell
-podman build --security-opt=label=disable --cap-add=all --device /dev/fuse  -t localhost/fedora-bootc:40
+podman build --security-opt=label=disable --cap-add=all -t localhost/fedora-bootc:40 .
 ```
 
 The default uses Fedora 40; to generate e.g. Fedora rawhide content, use
 
 ```shell
-podman build --from=quay.io/fedora/fedora:rawhide --security-opt=label=disable --cap-add=all --device /dev/fuse  -t localhost/fedora-bootc:rawhide
+podman build --from=quay.io/fedora/fedora:rawhide --security-opt=label=disable --cap-add=all -t localhost/fedora-bootc:rawhide .
 ```
 
 etc.
 
+For more about how the build system came to be, see [README-build-rationale.md](README-build-rationale.md).
