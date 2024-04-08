@@ -30,17 +30,25 @@ RUN --mount=type=cache,target=/var/cache/dnf,z dnf -y --enablerepo=updates-testi
 COPY . /src
 ARG VARIANT=full
 RUN /src/build/check-environment
+
+# Phase: pre-install
 # Populate the initial rootfs directory; the /workdir is a temporary volume defined to not be on overlayfs
 # so that we can e.g. set SELinux labels and file capabilities
 RUN --mount=type=cache,target=/var/cache/dnf,z --mount=type=cache,target=/workdir rm -rf /workdir/rootfs && /src/build/install-imagedir /src/bootc-${VARIANT} /workdir/rootfs
 
+# Phase: post-variant
 # Insert arbitrary other code here, if desired.  If convenient, you can use the /src/build/install-imagedir entrypoint.
 # RUN --mount=type=cache,target=/workdir <your code here>
+# For example:
+# RUN --mount=type=cache,target=/workdir /src/build/dnf-installroot /workdir/rootfs install -y vim
+# Or, grab some binaries from a separate container image:
+# COPY --from=artifacts /artifacts/usr/ /workdir/rootfs/usr/
 
 # Significant postprocessing, such as generating the initramfs, fixing up SELinux
 # location.
 RUN --mount=type=cache,target=/workdir /src/build/postprocess-rootfs /workdir/rootfs
 
+# Phase: pre-oci
 # Final place to execute arbitrary code on the target root before we commit it as a container
 # RUN --mount=type=cache,target=/workdir <your code here>
 
