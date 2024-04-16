@@ -7,7 +7,7 @@ stages:
   - release
 
 variables:
-  IMAGE_BASE_PATH: $CI_REGISTRY/$CI_PROJECT_PATH/fedora-bootc-base
+  IMAGE_BASE_PATH: $CI_REGISTRY/$CI_PROJECT_PATH
 
 .build-image-arch:
   interruptible: true
