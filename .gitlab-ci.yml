@@ -1,35 +1,35 @@
-image: quay.io/podman/stable:latest
+---
+include:
+  - remote: https://gitlab.com/platform-engineering-org/gitlab-ci/-/raw/main/templates/build-image.gitlab-ci.yml # yamllint disable-line rule:line-length
 
 stages:
   - build
+  - release
 
-test-build:
-  parallel:
-    matrix:
-      - VARIANT:
-          - minimal
-          - full
-        VERSION: 
-          - "40"
-  only:
-    - merge_requests
-  stage: build
-  script:
-    - podman build --security-opt=label=disable --cap-add=all -t localhost/fedora-bootc-${VARIANT} .
+variables:
+  IMAGE_BASE_PATH: $CI_REGISTRY/$CI_PROJECT_PATH/fedora-bootc-base
 
-build-push:
-  parallel:
-    matrix:
-      - VARIANT:
-          - minimal
-          - full
-        VERSION: ["40", "rawhide"]
-  rules:
-    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
-  stage: build
+.build-image-arch:
+  interruptible: true
+  variables:
+    IMAGE: $IMAGE_BASE_PATH:$CI_COMMIT_REF_SLUG-$ARCH
   before_script:
-    # Log into the registry
-    - echo "$CI_REGISTRY_PASSWORD" | podman login -u "$CI_REGISTRY_USER" --password-stdin $CI_REGISTRY
-  script:
-    - podman build --security-opt=label=disable --cap-add=all --from=quay.io/fedora/fedora:${VERSION} -t ${CI_REGISTRY_IMAGE}/fedora-bootc-${VARIANT}:${VERSION} .
-    - podman push ${CI_REGISTRY_IMAGE}/fedora-bootc-${VARIANT}:${VERSION}
+    - buildah login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+  after_script:
+    - buildah push $IMAGE
+  extends: .build-image
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_SOURCE_PROJECT_PATH != $CI_PROJECT_PATH && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == $CI_DEFAULT_BRANCH'
+    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CI_PROJECT_PATH == "bootc-org/centos-bootc-layered"'
+    - if: '$CI_PIPELINE_SOURCE == "schedule"'
+    - when: never
+
+build_amd64:
+  variables:
+    ARCH: amd64
+  extends: .build-image-arch
+
+build_arm64:
+  variables:
+    ARCH: arm64
+  extends: .build-image-arch
