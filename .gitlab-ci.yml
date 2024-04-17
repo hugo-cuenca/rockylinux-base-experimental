@@ -8,9 +8,9 @@ stages:
 
 .build-image-arch:
   interruptible: true
-  image: quay.io/buildah/stable:latest
   variables:
     IMAGE: $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG-$ARCH
+    EXTRA_ARGS: --format oci --net=host --arch $ARCH
   before_script:
     - buildah login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
   after_script:
