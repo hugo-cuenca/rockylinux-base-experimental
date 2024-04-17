@@ -13,6 +13,7 @@ stages:
     EXTRA_ARGS: --format oci --arch $ARCH --security-opt=label=disable --cap-add=all
   before_script:
     - buildah login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - echo "buildah bud -f ${CONTAINERFILE} --no-cache -t ${IMAGE} ${EXTRA_ARGS} ${CONTEXT}"
   after_script:
     - buildah push $IMAGE
   extends: .build-image
