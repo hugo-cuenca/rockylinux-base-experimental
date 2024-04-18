@@ -9,7 +9,7 @@ stages:
 .build-image-arch:
   interruptible: true
   variables:
-    IMAGE: $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG-$ARCH
+    IMAGE: $CI_REGISTRY_IMAGE/fedora-bootc:$CI_COMMIT_REF_SLUG-$ARCH
     EXTRA_ARGS: --format oci --arch $ARCH --security-opt=label=disable --cap-add=all
   before_script:
     - buildah login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
@@ -28,7 +28,9 @@ build_amd64:
     ARCH: amd64
   extends: .build-image-arch
 
-build_arm64:
-  variables:
-    ARCH: arm64
-  extends: .build-image-arch
+# build_arm64:
+#   tags:
+#     - platform-engineering
+#   variables:
+#     ARCH: arm64
+#   extends: .build-image-arch
