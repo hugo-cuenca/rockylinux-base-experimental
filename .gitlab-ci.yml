@@ -28,9 +28,9 @@ build_amd64:
     ARCH: amd64
   extends: .build-image-arch
 
-# build_arm64:
-#   tags:
-#     - platform-engineering
-#   variables:
-#     ARCH: arm64
-#   extends: .build-image-arch
+build_arm64:
+  tags:
+    - platform-engineering
+  variables:
+    ARCH: arm64
+  extends: .build-image-arch
