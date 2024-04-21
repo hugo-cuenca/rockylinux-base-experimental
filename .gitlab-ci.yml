@@ -6,9 +6,17 @@ stages:
   - build
 
 .build-image-arch:
+  parallel:
+    matrix:
+      - VARIANT:
+          - minimal
+          - full
+        VERSION:
+          - "40"
+          - rawhide
   interruptible: true
   variables:
-    IMAGE: $CI_REGISTRY_IMAGE/fedora-bootc:$CI_COMMIT_REF_SLUG-$ARCH
+    IMAGE: $CI_REGISTRY_IMAGE-$VARIANT:$VERSION-$ARCH
     EXTRA_ARGS: --format oci --arch $ARCH --security-opt=label=disable --cap-add=all
   before_script:
     - buildah login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
@@ -35,6 +43,14 @@ build_arm64:
   extends: .build-image-arch
 
 manifests_list:
+  parallel:
+    matrix:
+      - VARIANT:
+          - minimal
+          - full
+        VERSION:
+          - "40"
+          - rawhide
   stage: build
   needs:
     - build_amd64
@@ -42,7 +58,7 @@ manifests_list:
   interruptible: true
   image: quay.io/buildah/stable:v1.35.3
   variables:
-    IMAGE: $CI_REGISTRY_IMAGE/fedora-bootc:$CI_COMMIT_REF_SLUG
+    IMAGE: $CI_REGISTRY_IMAGE-$VARIANT:$VERSION
   before_script:
     - buildah login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
     - buildah pull $IMAGE-arm64
