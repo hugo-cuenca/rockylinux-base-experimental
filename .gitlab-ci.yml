@@ -1,12 +1,6 @@
 ---
-defaults:
+default:
   interruptible: true
-  rules:
-    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_SOURCE_PROJECT_PATH != $CI_PROJECT_PATH && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == $CI_DEFAULT_BRANCH'
-    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CI_PROJECT_PATH == "bootc-org/fedora-bootc/base-images-experimental"'
-    - if: '$CI_PIPELINE_SOURCE == "schedule"'
-    - when: never
-  stage: build
 
 include:
   - remote: https://gitlab.com/platform-engineering-org/gitlab-ci/-/raw/main/templates/build-image.gitlab-ci.yml # yamllint disable-line rule:line-length
@@ -32,18 +26,36 @@ stages:
     - !reference [.build-image, script]
     - buildah push $IMAGE
   extends: .build-image
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_SOURCE_PROJECT_PATH != $CI_PROJECT_PATH && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == $CI_DEFAULT_BRANCH'
+    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CI_PROJECT_PATH == "bootc-org/fedora-bootc/base-images-experimental"'
+    - if: '$CI_PIPELINE_SOURCE == "schedule"'
+    - when: never
+  stage: build
 
-build-amd64:
+build-push-amd64:
   variables:
     ARCH: amd64
   extends: .build-push-image-arch
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_SOURCE_PROJECT_PATH != $CI_PROJECT_PATH && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == $CI_DEFAULT_BRANCH'
+    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CI_PROJECT_PATH == "bootc-org/fedora-bootc/base-images-experimental"'
+    - if: '$CI_PIPELINE_SOURCE == "schedule"'
+    - when: never
+  stage: build
 
-build-arm64:
+build-push-arm64:
   tags:
     - platform-engineering
   variables:
     ARCH: arm64
   extends: .build-push-image-arch
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_SOURCE_PROJECT_PATH != $CI_PROJECT_PATH && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == $CI_DEFAULT_BRANCH'
+    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CI_PROJECT_PATH == "bootc-org/fedora-bootc/base-images-experimental"'
+    - if: '$CI_PIPELINE_SOURCE == "schedule"'
+    - when: never
+  stage: build
 
 manifests_list:
   parallel:
@@ -55,8 +67,8 @@ manifests_list:
           - "40"
           - rawhide
   needs:
-    - build-amd64
-    - build-arm64
+    - build-push-amd64
+    - build-push-arm64
   image: quay.io/buildah/stable:v1.35.3
   variables:
     IMAGE: $CI_REGISTRY_IMAGE-$VARIANT:$VERSION
@@ -69,3 +81,9 @@ manifests_list:
     - buildah manifest annotate $IMAGE $IMAGE-arm64 --os linux --arch arm64
     - buildah manifest annotate $IMAGE $IMAGE-amd64 --os linux --arch amd64
     - buildah manifest push  --all $IMAGE docker://$IMAGE
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_SOURCE_PROJECT_PATH != $CI_PROJECT_PATH && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == $CI_DEFAULT_BRANCH'
+    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CI_PROJECT_PATH == "bootc-org/fedora-bootc/base-images-experimental"'
+    - if: '$CI_PIPELINE_SOURCE == "schedule"'
+    - when: never
+  stage: build
