@@ -48,10 +48,10 @@ manifests_list:
     - buildah pull $IMAGE-arm64
     - buildah pull $IMAGE-amd64
   script:
-    - buildah manifest create $IMAGE_TAG $IMAGE-amd64 $IMAGE-arm64
-    - buildah manifest annotate $IMAGE_TAG $IMAGE-arm64 --os linux --arch arm64
-    - buildah manifest annotate $IMAGE_TAG $IMAGE-amd64 --os linux --arch amd64
-    - buildah manifest push  --all $IMAGE_TAG docker://$IMAGE_TAG
+    - buildah manifest create $IMAGE $IMAGE-amd64 $IMAGE-arm64
+    - buildah manifest annotate $IMAGE $IMAGE-arm64 --os linux --arch arm64
+    - buildah manifest annotate $IMAGE $IMAGE-amd64 --os linux --arch amd64
+    - buildah manifest push  --all $IMAGE docker://$IMAGE
   rules:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_SOURCE_PROJECT_PATH != $CI_PROJECT_PATH && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == $CI_DEFAULT_BRANCH'
     - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CI_PROJECT_PATH == "bootc-org/fedora-bootc/base-images-experimental"'
