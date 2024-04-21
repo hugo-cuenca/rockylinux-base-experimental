@@ -42,7 +42,7 @@ manifests_list:
   interruptible: true
   image: quay.io/buildah/stable:v1.35.3
   variables:
-    IMAGE: $CI_REGISTRY_IMAGE/fedora-bootc:$CI_COMMIT_REF_SLUG-$ARCH
+    IMAGE: $CI_REGISTRY_IMAGE/fedora-bootc:$CI_COMMIT_REF_SLUG
   before_script:
     - buildah login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
     - buildah pull $IMAGE-arm64
