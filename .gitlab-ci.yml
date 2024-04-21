@@ -71,7 +71,7 @@ manifests_list:
     - build-push-arm64
   image: quay.io/buildah/stable:v1.35.3
   variables:
-    IMAGE: $CI_REGISTRY_IMAGE/fedora-bootc-$VARIANT:$VERSION-$ARCH
+    IMAGE: $CI_REGISTRY_IMAGE/fedora-bootc-$VARIANT:$VERSION
   before_script:
     - buildah login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
     - buildah pull $IMAGE-arm64
