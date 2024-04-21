@@ -14,7 +14,7 @@ include:
 stages:
   - build
 
-.build-image-arch:
+.build-push-image-arch:
   parallel:
     matrix:
       - VARIANT:
