@@ -8,7 +8,8 @@
       "matchPackageNames": [
         "quay.io/fedora/fedora"
       ],
-      "allowedVersions": "/40/"
+      "allowedVersions": "/40/",
+      "pinDigests": true
     }
   ]
 }
