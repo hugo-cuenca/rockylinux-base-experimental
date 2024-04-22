@@ -2,5 +2,13 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
     "local>bootc-org/renovate-config"
+  ],
+  "packageRules": [
+    {
+      "matchPackageNames": [
+        "quay.io/fedora/fedora"
+      ],
+      "allowedVersions": "/40/"
+    }
   ]
 }
