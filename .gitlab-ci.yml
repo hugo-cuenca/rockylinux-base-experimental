@@ -38,7 +38,7 @@ container_scanning:
           - rawhide
   variables:
     IMAGE: $CI_REGISTRY_IMAGE/fedora-bootc-$VARIANT:$VERSION-$ARCH
-    EXTRA_ARGS: --build-arg=VARIANT=$VARIANT --format oci --arch $ARCH --security-opt=label=disable --cap-add=all
+    EXTRA_ARGS: --from=quay.io/fedora/fedora:$VERSION --build-arg=VARIANT=$VARIANT --format oci --arch $ARCH --security-opt=label=disable --cap-add=all
     ARCH: amd64
   before_script:
     - buildah login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
