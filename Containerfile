@@ -23,7 +23,7 @@
 # Because it's generating a base image and uses containerization features itself.
 # In the future some of this can be lifted.
 
-FROM quay.io/fedora/fedora:40@sha256:ede1e07259c695856d1fe4ba9978c6a9e26273ae2989968fd0d730d8e91822b5 as builder
+FROM quay.io/fedora/fedora:40 as builder
 # Install tools we will use to build
 RUN --mount=type=cache,target=/var/cache/dnf,z dnf -y --enablerepo=updates-testing install golang rpm-ostree selinux-policy-targeted jq dnf-utils rsync
 # Copy in the source
