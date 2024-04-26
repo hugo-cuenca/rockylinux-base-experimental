@@ -4,42 +4,61 @@ default:
 
 include:
   - remote: https://gitlab.com/platform-engineering-org/gitlab-ci/-/raw/main/templates/build-image.gitlab-ci.yml # yamllint disable-line rule:line-length
-  - template: Jobs/Container-Scanning.gitlab-ci.yml
+
+variables:
+  # Default this one
+  RUNNER: saas-linux-medium-amd64
+
+workflow:
+  rules:
+    # if the pipeline is on the default branch, then change the RUNNER_TAG variable
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      variables:
+        RUNNER_TAG: "production"
+    # ensure pipeline still runs if above conditions are not met
+    - when: always 
 
 stages:
   - build
   - test
 
-ci-build-image:
+ci-build-image-arm64:
   variables:
-    IMAGE: $CI_REGISTRY_IMAGE/fedora-bootc-$VARIANT:$VERSION-amd64-$CI_COMMIT_REF_SLUG
-  extends: build-push-amd64
-  rules:
-    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_SOURCE_PROJECT_PATH != $CI_PROJECT_PATH && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == $CI_DEFAULT_BRANCH'
-
-container_scanning:
-  variables:
-    GIT_STRATEGY: fetch
-    CS_DOCKERFILE_PATH: Containerfile
-    CS_IMAGE: $CI_REGISTRY_IMAGE/fedora-bootc-full:40-amd64-$CI_COMMIT_REF_SLUG
-  needs:
-    - ci-build-image
-  rules:
-    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_SOURCE_PROJECT_PATH != $CI_PROJECT_PATH && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == $CI_DEFAULT_BRANCH'
-
-.build-push-image-arch:
+    ARCH: arm64
+    IMAGE: $CI_REGISTRY_IMAGE/fedora-bootc-$VARIANT:$VERSION-arm64-$CI_COMMIT_REF_SLUG
+  extends: .build-push-image-arch
   parallel:
     matrix:
       - VARIANT:
-          - minimal
           - full
         VERSION:
           - "40"
-          - rawhide
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_SOURCE_PROJECT_PATH != $CI_PROJECT_PATH && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == $CI_DEFAULT_BRANCH'
+  tags:
+    - tmp-gcp-bifrost-aarch64
+
+ci-build-image-amd64:
+  variables:
+    ARCH: amd64
+    IMAGE: $CI_REGISTRY_IMAGE/fedora-bootc-$VARIANT:$VERSION-amd64-$CI_COMMIT_REF_SLUG
+  script:
+    - !reference [.build-image, script]
+  parallel:
+    matrix:
+      - VARIANT:
+          - full
+        VERSION:
+          - "40"
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_SOURCE_PROJECT_PATH != $CI_PROJECT_PATH && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == $CI_DEFAULT_BRANCH'
+  tags:
+    - saas-linux-medium-amd64
+
+.build-push-image-arch:
   variables:
     IMAGE: $CI_REGISTRY_IMAGE/fedora-bootc-$VARIANT:$VERSION-$ARCH
     EXTRA_ARGS: --from=quay.io/fedora/fedora:$VERSION --build-arg=VARIANT=$VARIANT --format oci --arch $ARCH --security-opt=label=disable --cap-add=all
-    ARCH: amd64
   before_script:
     - buildah login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
   script:
@@ -50,6 +69,7 @@ container_scanning:
     - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CI_PROJECT_PATH == "fedora/bootc/base-images-experimental"'
     - when: never
   stage: build
+
 
 build-push-amd64:
   variables:
@@ -62,7 +82,7 @@ build-push-amd64:
 
 build-push-arm64:
   tags:
-    - platform-engineering
+    - tmp-gcp-bifrost-aarch64
   variables:
     ARCH: arm64
   extends: .build-push-image-arch
@@ -86,16 +106,18 @@ manifests_list:
   image: quay.io/buildah/stable:v1.35.3
   variables:
     IMAGE: $CI_REGISTRY_IMAGE/fedora-bootc-$VARIANT:$VERSION
+    ARCHES: "amd64 arm64"
   before_script:
     - buildah login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
-    - buildah pull $IMAGE-arm64
-    - buildah pull $IMAGE-amd64
+    - for arch in ${ARCHES}; do buildah pull $IMAGE-${arch}; done
   script:
     - |
       set -xeuo pipefail
       buildah manifest create $IMAGE $IMAGE-amd64 $IMAGE-arm64
-      buildah manifest annotate $IMAGE $IMAGE-arm64 --os linux --arch arm64
-      buildah manifest annotate $IMAGE $IMAGE-amd64 --os linux --arch amd64
+      for arch in ${ARCHES}; do 
+        buildah manifest annotate $IMAGE $IMAGE-${arch} --os linux --arch ${arch}
+        buildah manifest annotate $IMAGE $IMAGE-${arch} --os linux --arch ${arch}
+      done
       buildah manifest push --all $IMAGE docker://$IMAGE
       if test $VARIANT == full; then
         skopeo copy docker://$IMAGE $CI_REGISTRY_IMAGE/fedora-bootc:$VERSION
