@@ -67,7 +67,7 @@ build-push-arm64:
     ARCH: arm64
   extends: .build-push-image-arch
   rules:
-    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CI_PROJECT_PATH == "bootc-org/fedora-bootc/base-images-experimental"'
+    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CI_PROJECT_PATH == "fedora/bootc/base-images-experimental"'
     - when: never
   stage: build
 
@@ -91,11 +91,16 @@ manifests_list:
     - buildah pull $IMAGE-arm64
     - buildah pull $IMAGE-amd64
   script:
-    - buildah manifest create $IMAGE $IMAGE-amd64 $IMAGE-arm64
-    - buildah manifest annotate $IMAGE $IMAGE-arm64 --os linux --arch arm64
-    - buildah manifest annotate $IMAGE $IMAGE-amd64 --os linux --arch amd64
-    - buildah manifest push --all $IMAGE docker://$IMAGE
+    - |
+      set -xeuo pipefail
+      buildah manifest create $IMAGE $IMAGE-amd64 $IMAGE-arm64
+      buildah manifest annotate $IMAGE $IMAGE-arm64 --os linux --arch arm64
+      buildah manifest annotate $IMAGE $IMAGE-amd64 --os linux --arch amd64
+      buildah manifest push --all $IMAGE docker://$IMAGE
+      if test $VARIANT == full; then
+        skopeo copy docker://$IMAGE $CI_REGISTRY_IMAGE/fedora-bootc:$VERSION
+      fi
   rules:
-    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CI_PROJECT_PATH == "bootc-org/fedora-bootc/base-images-experimental"'
+    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CI_PROJECT_PATH == "fedora/bootc/base-images-experimental"'
     - when: never
   stage: build
