@@ -2,58 +2,44 @@
 default:
   interruptible: true
 
-include:
-  - remote: https://gitlab.com/platform-engineering-org/gitlab-ci/-/raw/main/templates/build-image.gitlab-ci.yml # yamllint disable-line rule:line-length
-
 variables:
   # Default this one
   RUNNER: saas-linux-medium-amd64
-
-workflow:
-  rules:
-    # if the pipeline is on the default branch, then change the RUNNER_TAG variable
-    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
-      variables:
-        RUNNER_TAG: "production"
-    # ensure pipeline still runs if above conditions are not met
-    - when: always 
+  ARM_RUNNER: tmp-gcp-bifrost-aarch64
+  ARCHES: "amd64 arm64"
+  BUILDAH_IMAGE: quay.io/buildah/stable:v1.34.0
+  BUILDAH_ARGS: "--security-opt=label=disable --cap-add=all"
 
 stages:
   - build
-  - test
+
+.build-image-mr:
+  image: $BUILDAH_IMAGE
+  parallel:
+    matrix:
+      - VARIANT:
+          - full
+        VERSION:
+          - "40"
+  script:
+    - buildah bud ${BUILDAH_ARGS} --no-cache -t localhost/test ${EXTRA_ARGS} ${CONTEXT}
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_SOURCE_PROJECT_PATH != $CI_PROJECT_PATH && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == $CI_DEFAULT_BRANCH'
+  stage: build
 
 ci-build-image-arm64:
   variables:
     ARCH: arm64
-    IMAGE: $CI_REGISTRY_IMAGE/fedora-bootc-$VARIANT:$VERSION-arm64-$CI_COMMIT_REF_SLUG
-  extends: .build-push-image-arch
-  parallel:
-    matrix:
-      - VARIANT:
-          - full
-        VERSION:
-          - "40"
-  rules:
-    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_SOURCE_PROJECT_PATH != $CI_PROJECT_PATH && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == $CI_DEFAULT_BRANCH'
+  extends: .build-image-mr
   tags:
-    - tmp-gcp-bifrost-aarch64
+    - $ARM_RUNNER
 
 ci-build-image-amd64:
   variables:
     ARCH: amd64
-    IMAGE: $CI_REGISTRY_IMAGE/fedora-bootc-$VARIANT:$VERSION-amd64-$CI_COMMIT_REF_SLUG
-  script:
-    - !reference [.build-image, script]
-  parallel:
-    matrix:
-      - VARIANT:
-          - full
-        VERSION:
-          - "40"
-  rules:
-    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_SOURCE_PROJECT_PATH != $CI_PROJECT_PATH && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == $CI_DEFAULT_BRANCH'
+  extends: .build-image-mr
   tags:
-    - saas-linux-medium-amd64
+    - $RUNNER
 
 .build-push-image-arch:
   variables:
@@ -62,9 +48,8 @@ ci-build-image-amd64:
   before_script:
     - buildah login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
   script:
-    - !reference [.build-image, script]
+    - buildah bud ${BUILDAH_ARGS} --no-cache -t ${IMAGE} ${EXTRA_ARGS} ${CONTEXT}
     - buildah push $IMAGE
-  extends: .build-image
   rules:
     - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CI_PROJECT_PATH == "fedora/bootc/base-images-experimental"'
     - when: never
@@ -103,10 +88,9 @@ manifests_list:
   needs:
     - build-push-amd64
     - build-push-arm64
-  image: quay.io/buildah/stable:v1.35.3
+  image: $BUILDAH_IMAGE
   variables:
     IMAGE: $CI_REGISTRY_IMAGE/fedora-bootc-$VARIANT:$VERSION
-    ARCHES: "amd64 arm64"
   before_script:
     - buildah login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
     - for arch in ${ARCHES}; do buildah pull $IMAGE-${arch}; done
