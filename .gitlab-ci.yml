@@ -13,6 +13,8 @@ variables:
 stages:
   - build
 
+# Code for merge requests
+
 .build-image-mr:
   image: $BUILDAH_IMAGE
   parallel:
@@ -41,7 +43,10 @@ ci-build-image-amd64:
   tags:
     - $RUNNER
 
+# Code executed to build and push to registry
+
 .build-push-image-arch:
+  image: $BUILDAH_IMAGE
   variables:
     IMAGE: $CI_REGISTRY_IMAGE/fedora-bootc-$VARIANT:$VERSION-$ARCH
     EXTRA_ARGS: --from=quay.io/fedora/fedora:$VERSION --build-arg=VARIANT=$VARIANT --format oci --arch $ARCH --security-opt=label=disable --cap-add=all
@@ -54,7 +59,6 @@ ci-build-image-amd64:
     - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CI_PROJECT_PATH == "fedora/bootc/base-images-experimental"'
     - when: never
   stage: build
-
 
 build-push-amd64:
   variables:
@@ -75,6 +79,8 @@ build-push-arm64:
     - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CI_PROJECT_PATH == "fedora/bootc/base-images-experimental"'
     - when: never
   stage: build
+
+# And stitch things together into a manifest list
 
 manifests_list:
   parallel:
