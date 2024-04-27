@@ -126,7 +126,7 @@ manifests_list:
       done
       buildah manifest push --all $IMAGE docker://$IMAGE
       if test $VARIANT == full; then
-        skopeo copy docker://$IMAGE $CI_REGISTRY_IMAGE/fedora-bootc:$VERSION
+        buildah push $IMAGE $CI_REGISTRY_IMAGE/fedora-bootc:$VERSION
       fi
   rules:
     - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
