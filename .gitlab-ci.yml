@@ -56,27 +56,43 @@ ci-build-image-amd64:
     - buildah bud ${BUILDAH_ARGS} --no-cache -t ${IMAGE} ${EXTRA_ARGS} ${CONTEXT}
     - buildah push $IMAGE
   rules:
-    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CI_PROJECT_PATH == "fedora/bootc/base-images-experimental"'
+    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
     - when: never
   stage: build
 
 build-push-amd64:
   variables:
     ARCH: amd64
+  parallel:
+    matrix:
+      - VARIANT:
+          - minimal
+          - full
+        VERSION:
+          - "40"
+          - rawhide
   extends: .build-push-image-arch
   rules:
-    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CI_PROJECT_PATH == "fedora/bootc/base-images-experimental"'
+    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
     - when: never
   stage: build
 
 build-push-arm64:
   tags:
     - tmp-gcp-bifrost-aarch64
+  parallel:
+    matrix:
+      - VARIANT:
+          - minimal
+          - full
+        VERSION:
+          - "40"
+          - rawhide
   variables:
     ARCH: arm64
   extends: .build-push-image-arch
   rules:
-    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CI_PROJECT_PATH == "fedora/bootc/base-images-experimental"'
+    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
     - when: never
   stage: build
 
@@ -113,6 +129,6 @@ manifests_list:
         skopeo copy docker://$IMAGE $CI_REGISTRY_IMAGE/fedora-bootc:$VERSION
       fi
   rules:
-    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CI_PROJECT_PATH == "fedora/bootc/base-images-experimental"'
+    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
     - when: never
   stage: build
