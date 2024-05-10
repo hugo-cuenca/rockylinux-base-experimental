@@ -23,6 +23,7 @@
 # Because it's generating a base image and uses containerization features itself.
 # In the future some of this can be lifted.
 
+# renovate: datasource=endoflife-date packageName=fedora versioning=docker
 FROM quay.io/fedora/fedora:40 as builder
 # Install tools we will use to build
 RUN --mount=type=cache,target=/var/cache/dnf,z dnf -y --enablerepo=updates-testing install golang rpm-ostree selinux-policy-targeted jq dnf-utils rsync
