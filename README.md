@@ -1,4 +1,4 @@
-# Base bootc images for Fedora
+# Base bootc images for Rocky Linux
 
 ## Motivation
 
