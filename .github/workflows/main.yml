@@ -32,11 +32,11 @@ jobs:
     - name: Push bootc image
       shell: bash
       env:
-        IMAGE_ID: ghcr.io/${{ github.repository_owner }}/${IMAGE_NAME}:${VERSION}-${ARCH}
-        IMAGE: ${IMAGE_ID}:${VERSION}-${ARCH}
-        EXTRA_ARGS: --from=quay.io/rockylinux/rockylinux:$VERSION --build-arg=VARIANT=full --format oci --arch ${ARCH} --security-opt=label=disable --cap-add=all
+        IMAGE_ID: ghcr.io/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}
+        IMAGE: ${{ env.IMAGE_ID }}::${{ env.VERSION }}-${{ env.ARCH }}
+        EXTRA_ARGS: --from=quay.io/rockylinux/rockylinux:${{ env.VERSION }} --build-arg=VARIANT=full --format oci --arch ${{ env.ARCH }} --security-opt=label=disable --cap-add=all
       run: |
         buildah login -u ${{ github.actor }} -p "${{ secrets.GITHUB_TOKEN }}"  ghcr.io
         buildah bud ${BUILDAH_ARGS} --no-cache -t ${IMAGE} ${EXTRA_ARGS}
-        buildah push $IMAGE
+        buildah push ${IMAGE}
         
