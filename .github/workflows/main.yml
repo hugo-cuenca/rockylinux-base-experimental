@@ -22,10 +22,13 @@ jobs:
       matrix:
         VERSION: 
         - '9'
-    container:
-      image: quay.io/buildah/stable:v1.34.0
     steps:
     - uses: actions/checkout@v4
+    - name: Install Buildah
+      shell: bash
+      run: |
+        sudo apt -y update
+        sudo apt -y install buildah
     - name: Push bootc image
       shell: bash
       env:
