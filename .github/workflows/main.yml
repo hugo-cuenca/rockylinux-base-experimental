@@ -24,7 +24,7 @@ jobs:
         - '9'
     steps:
     - uses: actions/checkout@v4
-    - name: Install Buildah
+    - name: Install Buildah from PPA
       shell: bash
       run: |
         # from https://askubuntu.com/questions/1414446/whats-the-recommended-way-of-installing-podman-4-in-ubuntu-22-04
