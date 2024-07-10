@@ -65,5 +65,9 @@ RUN --mount=type=bind,from=builder,src=.,target=/var/tmp --mount=type=bind,rw=tr
 # And configure metadata
 LABEL containers.bootc=1
 LABEL redhat.id=rockylinux
+LABEL org.opencontainers.image.authors="Hugo,Cuenca, Magauer Lukas, Neil Hanlon, Louis Abel"
+LABEL org.opencontainers.image.license="MIT"
+LABEL org.opencontainers.image.name="rockylinux"
+LABEL org.opencontainers.image.url="https://github.com/hugo-cuenca/rockylinux-base-experimental"
 STOPSIGNAL SIGRTMIN+3
 CMD /sbin/init

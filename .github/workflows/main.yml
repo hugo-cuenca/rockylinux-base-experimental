@@ -40,7 +40,7 @@ jobs:
       shell: bash
       env:
         IMAGE: ghcr.io/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:${{ matrix.VERSION }}-${{ env.ARCH }}
-        EXTRA_ARGS: --from=quay.io/rockylinux/rockylinux:${{ matrix.VERSION }} --build-arg=VARIANT=full --format oci --arch ${{ env.ARCH }} --security-opt=label=disable --cap-add=all
+        EXTRA_ARGS: --from=quay.io/rockylinux/rockylinux:${{ matrix.VERSION }} --build-arg=VARIANT=full --format oci --arch ${{ env.ARCH }} --label org.opencontainers.image.version=${{ matrix.VERSION }} --label version=${{ matrix.VERSION }} --security-opt=label=disable --cap-add=all
       run: |
         buildah login -u ${{ github.actor }} -p "${{ secrets.GITHUB_TOKEN }}"  ghcr.io
         buildah bud ${BUILDAH_ARGS} --no-cache -t ${IMAGE} ${EXTRA_ARGS}
