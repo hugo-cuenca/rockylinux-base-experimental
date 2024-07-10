@@ -24,7 +24,7 @@
 # In the future some of this can be lifted.
 
 # renovate: datasource=endoflife-date packageName=fedora versioning=docker
-FROM quay.io/fedora/fedora:40 as builder
+FROM quay.io/rockylinux/rockylinux:9 as builder
 # Install tools we will use to build
 RUN --mount=type=cache,target=/var/cache/dnf,z dnf -y --enablerepo=updates-testing install golang rpm-ostree selinux-policy-targeted jq dnf-utils rsync
 # Copy in the source
@@ -64,6 +64,6 @@ FROM oci-archive:./out.ociarchive
 RUN --mount=type=bind,from=builder,src=.,target=/var/tmp --mount=type=bind,rw=true,src=.,dst=/buildcontext,bind-propagation=shared rm /buildcontext/out.ociarchive
 # And configure metadata
 LABEL containers.bootc=1
-LABEL redhat.id=fedora
+LABEL redhat.id=rockylinux
 STOPSIGNAL SIGRTMIN+3
 CMD /sbin/init
