@@ -26,7 +26,7 @@
 # renovate: datasource=endoflife-date packageName=fedora versioning=docker
 FROM quay.io/rockylinux/rockylinux:9 as builder
 # Install tools we will use to build
-RUN --mount=type=cache,target=/var/cache/dnf,z dnf -y --enablerepo=updates-testing install golang rpm-ostree selinux-policy-targeted jq dnf-utils rsync
+RUN --mount=type=cache,target=/var/cache/dnf,z dnf -y install golang rpm-ostree selinux-policy-targeted jq dnf-utils rsync
 # Copy in the source
 COPY . /src
 ARG VARIANT=full
