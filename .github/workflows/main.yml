@@ -29,6 +29,7 @@ jobs:
       run: |
         sudo apt -y update
         sudo apt -y install buildah
+        sudo apt list buildah
     - name: Push bootc image
       shell: bash
       env:
