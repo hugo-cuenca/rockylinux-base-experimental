@@ -12,7 +12,7 @@
 #
 # - auto-updating labels in the container metadata
 # - Generating "chunked" content-addressed reproducible image layers (notice
-#   how there are ~60 layers in the generated image)
+#   how there are ~60 layers in the generated image) 
 #
 # The latter bit in particular is currently impossible to do from Containerfile.
 # A future goal is adding some support for this in a way that can be honored by
