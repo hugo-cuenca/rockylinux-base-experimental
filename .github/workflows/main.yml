@@ -36,7 +36,7 @@ jobs:
         IMAGE: $IMAGE_ID:$VERSION-$ARCH
         EXTRA_ARGS: --from=quay.io/rockylinux/rockylinux:$VERSION --build-arg=VARIANT=full --format oci --arch $ARCH --security-opt=label=disable --cap-add=all
       run: |
-        buildah login ghcr.io -u ${{ github.actor }} --password "${{ secrets.GITHUB_TOKEN }}"
+        buildah login -u ${{ github.actor }} -p "${{ secrets.GITHUB_TOKEN }}"  ghcr.io
         buildah bud ${BUILDAH_ARGS} --no-cache -t ${IMAGE} ${EXTRA_ARGS}
         buildah push $IMAGE
         
